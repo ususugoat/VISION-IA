@@ -41,6 +41,7 @@ export const Header: React.FC = () => {
     classes: { title: "Catálogo de Clases & Taxonomía", category: "Administración" },
     rules: { title: "Reglas de Negocio & Detección", category: "Administración" },
     settings: { title: "Configuración de Sistema & Conexión de IA", category: "Administración" },
+    procedures_manual: { title: "Manual de Procedimientos & Glosario", category: "Base Documental" },
   };
 
   const currentInfo = pageTitles[currentPage] || { title: "Plataforma", category: "VISION AI" };

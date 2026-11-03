@@ -24,6 +24,7 @@ export const SettingsPage: React.FC = () => {
     repository,
     refreshKPIs,
     showToast,
+    permissions,
   } = useApp();
 
   const [apiUrl, setApiUrl] = useState('http://localhost:8000/api/v1');
@@ -95,10 +96,16 @@ export const SettingsPage: React.FC = () => {
               {/* Option 1: DemoVisionAdapter */}
               <div
                 onClick={() => {
+                  if (!permissions.canChangeEngine) {
+                    showToast("Solo Administradores pueden cambiar el motor de inferencia", "warning");
+                    return;
+                  }
                   setEngineMode('demo');
                   showToast("Motor cambiado a DemoVisionAdapter", "info");
                 }}
-                className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start justify-between ${
+                className={`p-4 rounded-xl border transition-all flex items-start justify-between ${
+                  !permissions.canChangeEngine ? "opacity-75 cursor-not-allowed" : "cursor-pointer"
+                } ${
                   engineMode === 'demo'
                     ? "border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600"
                     : "border-slate-200 hover:border-slate-300 bg-white"
@@ -121,10 +128,16 @@ export const SettingsPage: React.FC = () => {
               {/* Option 2: ApiVisionAdapter */}
               <div
                 onClick={() => {
+                  if (!permissions.canChangeEngine) {
+                    showToast("Solo Administradores pueden cambiar el motor de inferencia", "warning");
+                    return;
+                  }
                   setEngineMode('api');
                   showToast("Motor cambiado a ApiVisionAdapter (REST)", "info");
                 }}
-                className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start justify-between ${
+                className={`p-4 rounded-xl border transition-all flex items-start justify-between ${
+                  !permissions.canChangeEngine ? "opacity-75 cursor-not-allowed" : "cursor-pointer"
+                } ${
                   engineMode === 'api'
                     ? "border-emerald-600 bg-emerald-50/50 shadow-xs ring-1 ring-emerald-600"
                     : "border-slate-200 hover:border-slate-300 bg-white"

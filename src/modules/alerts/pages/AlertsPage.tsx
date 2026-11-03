@@ -19,7 +19,14 @@ import {
 import { CsvExportService } from '../../../infrastructure/export/CsvExportService';
 
 export const AlertsPage: React.FC = () => {
-  const { repository, currentUser, refreshKPIs, showToast } = useApp();
+  const {
+    repository,
+    currentUser,
+    refreshKPIs,
+    showToast,
+    permissions,
+    updateAlertStatusUseCase,
+  } = useApp();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [statusFilter, setStatusFilter] = useState<AlertStatus | 'all'>('all');
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
@@ -46,7 +53,7 @@ export const AlertsPage: React.FC = () => {
   const handleSaveReview = async () => {
     if (!selectedAlert) return;
     try {
-      const updated = await repository.updateAlertStatus(
+      const updated = await updateAlertStatusUseCase.execute(
         selectedAlert.id,
         reviewStatus,
         currentUser.name,
@@ -190,7 +197,9 @@ export const AlertsPage: React.FC = () => {
                   onClick={() => handleOpenReview(alt)}
                   className="text-xs"
                 >
-                  {alt.status === 'nueva' ? "Revisar Incidente" : "Editar Auditoría"}
+                  {permissions.canReviewAlerts
+                    ? alt.status === 'nueva' ? "Revisar Incidente" : "Editar Auditoría"
+                    : "Ver Detalle Incidente"}
                 </Button>
               </div>
             </div>
@@ -255,20 +264,28 @@ export const AlertsPage: React.FC = () => {
               />
             </div>
 
-            {/* Auditor Info */}
+            {/* Auditor Info / Permission Banner */}
+            {!permissions.canReviewAlerts && (
+              <div className="p-2.5 rounded bg-amber-50 border border-amber-200 text-amber-900 text-[11px]">
+                ℹ️ Solo los roles de <strong>Administrador</strong> y <strong>Supervisor</strong> pueden cambiar el estado de la alerta. Modo de consulta activo.
+              </div>
+            )}
+
             <div className="p-2.5 rounded bg-blue-50/60 border border-blue-100 flex items-center justify-between text-[11px] text-blue-900">
-              <span>Auditor responsable: <strong>{currentUser.name}</strong></span>
+              <span>Usuario en sesión: <strong>{currentUser.name}</strong></span>
               <Badge variant="blue">{currentUser.role.toUpperCase()}</Badge>
             </div>
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
               <Button size="sm" variant="outline" onClick={() => setSelectedAlert(null)}>
-                Cancelar
+                {permissions.canReviewAlerts ? "Cancelar" : "Cerrar"}
               </Button>
-              <Button size="sm" variant="primary" onClick={handleSaveReview}>
-                Guardar Auditoría
-              </Button>
+              {permissions.canReviewAlerts && (
+                <Button size="sm" variant="primary" onClick={handleSaveReview}>
+                  Guardar Auditoría
+                </Button>
+              )}
             </div>
           </div>
         </Modal>

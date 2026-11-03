@@ -28,12 +28,13 @@ import { CsvExportService } from '../../../infrastructure/export/CsvExportServic
 
 export const AnalysisPage: React.FC = () => {
   const {
-    visionEngine,
     repository,
     currentUser,
     refreshKPIs,
     showToast,
     engineMode,
+    permissions,
+    analyzeImageUseCase,
   } = useApp();
 
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
@@ -135,45 +136,26 @@ export const AnalysisPage: React.FC = () => {
       setProgressPercent(75);
       await new Promise((r) => setTimeout(r, 200));
 
-      // Stage 4: Rule & Pattern matching via VisionEngine
+      // Stage 4: Rule & Pattern matching via AnalyzeImageUseCase
       setProgressStage("4/4. Evaluación de reglas de negocio, umbrales y alertas...");
       setProgressPercent(90);
 
-      const result = await visionEngine.analyze({
-        analysisId,
-        sourceName: activeImageTitle,
-        imageUrl: activeImageUrl,
-        scenarioId: selectedScenarioId || undefined,
-        mode: analysisMode,
-        confidenceThreshold,
-        user: currentUser,
-      });
+      const { result } = await analyzeImageUseCase.execute(
+        {
+          analysisId,
+          sourceName: activeImageTitle,
+          imageUrl: activeImageUrl,
+          scenarioId: selectedScenarioId || undefined,
+          mode: analysisMode,
+          confidenceThreshold,
+          user: currentUser,
+        },
+        activeScenario?.name
+      );
 
       setProgressPercent(100);
       setCurrentResult(result);
 
-      // Save to Repository
-      const record: AnalysisRecord = {
-        id: analysisId,
-        createdAt: new Date().toISOString(),
-        createdBy: currentUser.name,
-        userRole: currentUser.role,
-        sourceName: activeImageTitle,
-        scenarioId: selectedScenarioId || undefined,
-        scenarioName: activeScenario?.name || "Análisis Personalizado",
-        imageUrl: activeImageUrl,
-        mode: analysisMode,
-        status: "completed",
-        durationMs: result.durationMs,
-        averageConfidence: result.averageConfidence,
-        detectionsCount: result.detections.length,
-        alertsCount: result.alerts.length,
-        confidenceThreshold,
-        engineType: engineMode,
-        result,
-      };
-
-      await repository.saveAnalysis(record);
       await refreshKPIs();
 
       if (result.alerts.length > 0) {
@@ -319,12 +301,17 @@ export const AnalysisPage: React.FC = () => {
               variant="primary"
               size="md"
               loading={status === 'processing'}
-              disabled={status === 'processing' || !activeImageUrl}
+              disabled={status === 'processing' || !activeImageUrl || !permissions.canRunAnalysis}
+              title={!permissions.canRunAnalysis ? "Rol Auditor: Solo lectura" : undefined}
               icon={<Play className="w-4 h-4 fill-current" />}
               onClick={handleRunAnalysis}
               className="shadow-md shadow-blue-600/25 px-5"
             >
-              {status === 'processing' ? "Procesando..." : "Ejecutar Análisis"}
+              {status === 'processing'
+                ? "Procesando..."
+                : !permissions.canRunAnalysis
+                ? "Solo Lectura (Auditor)"
+                : "Ejecutar Análisis"}
             </Button>
           </div>
         </div>

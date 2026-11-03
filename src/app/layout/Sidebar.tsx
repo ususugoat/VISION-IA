@@ -1,5 +1,6 @@
 import React from 'react';
-import { useApp, NavigationPage } from '../providers/AppContext';
+import { useApp } from '../providers/AppContext';
+import type { NavigationPage } from '../providers/AppContext';
 import {
   LayoutDashboard,
   ScanEye,
@@ -13,7 +14,8 @@ import {
   Sliders,
   Settings,
   ShieldCheck,
-  ChevronRight,
+  BookOpen,
+  Lock,
 } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 
@@ -22,6 +24,7 @@ interface NavItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string | number;
+  requiresPermission?: string;
 }
 
 interface NavSection {
@@ -30,7 +33,7 @@ interface NavSection {
 }
 
 export const Sidebar: React.FC = () => {
-  const { currentPage, setCurrentPage, kpis } = useApp();
+  const { currentPage, setCurrentPage, kpis, permissions } = useApp();
 
   const sections: NavSection[] = [
     {
@@ -74,6 +77,12 @@ export const Sidebar: React.FC = () => {
         { id: 'settings', label: 'Configuración & IA', icon: Settings },
       ],
     },
+    {
+      title: "Base Documental",
+      items: [
+        { id: 'procedures_manual', label: 'Manual de Procedimientos', icon: BookOpen },
+      ],
+    },
   ];
 
   return (
@@ -97,7 +106,7 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Navigation Sections */}
-      <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+      <div className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
         {sections.map((section) => (
           <div key={section.title} className="space-y-1">
             <div className="px-3 text-[11px] font-bold tracking-wider text-slate-500 uppercase">
@@ -151,4 +160,3 @@ export const Sidebar: React.FC = () => {
     </aside>
   );
 };
-

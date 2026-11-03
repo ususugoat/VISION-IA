@@ -16,6 +16,7 @@ import { HistoryPage } from '../../modules/history/pages/HistoryPage';
 import { ScenariosPage } from '../../modules/scenarios/pages/ScenariosPage';
 import { ClassesPage } from '../../modules/classes/pages/ClassesPage';
 import { SettingsPage } from '../../modules/settings/pages/SettingsPage';
+import { ProceduresManualPage } from '../../modules/procedures/pages/ProceduresManualPage';
 
 export const AppShell: React.FC = () => {
   const { currentPage } = useApp();
@@ -44,6 +45,8 @@ export const AppShell: React.FC = () => {
         return <PatternsPage />; // Also rule configuration
       case 'settings':
         return <SettingsPage />;
+      case 'procedures_manual':
+        return <ProceduresManualPage />;
       default:
         return <DashboardPage />;
     }

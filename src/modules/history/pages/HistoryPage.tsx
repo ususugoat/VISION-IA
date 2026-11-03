@@ -22,7 +22,7 @@ import {
 import { CsvExportService } from '../../../infrastructure/export/CsvExportService';
 
 export const HistoryPage: React.FC = () => {
-  const { repository, showToast, refreshKPIs } = useApp();
+  const { repository, showToast, refreshKPIs, permissions, searchHistoryUseCase } = useApp();
   const [analyses, setAnalyses] = useState<AnalysisRecord[]>([]);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
 
@@ -36,7 +36,7 @@ export const HistoryPage: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<AnalysisRecord | null>(null);
 
   const loadData = async () => {
-    const list = await repository.getAllAnalyses({
+    const list = await searchHistoryUseCase.execute({
       query: searchQuery || undefined,
       scenarioId: scenarioFilter,
       mode: modeFilter,
@@ -249,13 +249,15 @@ export const HistoryPage: React.FC = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={(e) => handleDelete(item.id, e)}
-                          className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {permissions.canDeleteAnalysis && (
+                          <button
+                            onClick={(e) => handleDelete(item.id, e)}
+                            className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-slate-100"
+                            title="Eliminar (Admin)"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

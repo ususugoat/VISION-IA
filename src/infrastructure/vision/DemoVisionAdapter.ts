@@ -101,11 +101,11 @@ export class DemoVisionAdapter implements VisionEngine {
             label: "Segmentación de Sujeto",
             confidence: 0.89,
             areaRatio: 0.12,
-            type: "instance",
+            type: "instance" as const,
             color: "#3b82f6",
             polygon: [
               [0.26, 0.22], [0.45, 0.22], [0.47, 0.73], [0.25, 0.73]
-            ],
+            ] as [number, number][],
           },
           {
             id: `mask_custom_2`,
@@ -114,11 +114,11 @@ export class DemoVisionAdapter implements VisionEngine {
             label: "Segmentación Fondo / Piso",
             confidence: 0.94,
             areaRatio: 0.40,
-            type: "semantic",
+            type: "semantic" as const,
             color: "#64748b",
             polygon: [
               [0.0, 0.6], [1.0, 0.6], [1.0, 1.0], [0.0, 1.0]
-            ],
+            ] as [number, number][],
           },
         ].filter((m) => m.confidence >= input.confidenceThreshold);
       }
@@ -132,8 +132,8 @@ export class DemoVisionAdapter implements VisionEngine {
             label: "Inspección Visual General",
             confidence: 0.88,
             evidence: "Detección de elementos visuales principales dentro de parámetros estables.",
-            status: "normal",
-            severity: "low",
+            status: "normal" as const,
+            severity: "low" as const,
           },
         ].filter((p) => p.confidence >= input.confidenceThreshold);
       }

@@ -7,7 +7,7 @@ import { Button } from '../../../shared/ui/Button';
 import { Tags, Plus, Edit2, Check } from 'lucide-react';
 
 export const ClassesPage: React.FC = () => {
-  const { repository, showToast } = useApp();
+  const { repository, showToast, permissions } = useApp();
   const [classes, setClasses] = useState<VisionClass[]>([]);
 
   useEffect(() => {
@@ -15,6 +15,10 @@ export const ClassesPage: React.FC = () => {
   }, [repository]);
 
   const toggleClass = async (cls: VisionClass) => {
+    if (!permissions.canEditClasses) {
+      showToast("Solo Administradores pueden modificar el catálogo de clases", "warning");
+      return;
+    }
     const updated = { ...cls, enabled: !cls.enabled };
     await repository.updateClass(updated);
     setClasses((prev) => prev.map((c) => (c.id === cls.id ? updated : c)));
@@ -22,6 +26,10 @@ export const ClassesPage: React.FC = () => {
   };
 
   const handleColorChange = async (cls: VisionClass, newColor: string) => {
+    if (!permissions.canEditClasses) {
+      showToast("Solo Administradores pueden editar colores de clases", "warning");
+      return;
+    }
     const updated = { ...cls, color: newColor };
     await repository.updateClass(updated);
     setClasses((prev) => prev.map((c) => (c.id === cls.id ? updated : c)));

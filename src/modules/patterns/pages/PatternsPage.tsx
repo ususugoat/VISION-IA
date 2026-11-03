@@ -7,17 +7,19 @@ import { Button } from '../../../shared/ui/Button';
 import { Sparkles, ShieldAlert, Sliders, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 
 export const PatternsPage: React.FC = () => {
-  const { repository, showToast } = useApp();
+  const { showToast, permissions, manageRulesUseCase } = useApp();
   const [rules, setRules] = useState<BusinessRule[]>([]);
-  const [editingRule, setEditingRule] = useState<BusinessRule | null>(null);
 
   useEffect(() => {
-    repository.getRules().then(setRules);
-  }, [repository]);
+    manageRulesUseCase.listRules().then(setRules);
+  }, [manageRulesUseCase]);
 
   const toggleRuleEnabled = async (rule: BusinessRule) => {
-    const updated = { ...rule, enabled: !rule.enabled };
-    await repository.updateRule(updated);
+    if (!permissions.canManageRules) {
+      showToast("Tu rol actual no tiene permisos para modificar reglas", "warning");
+      return;
+    }
+    const updated = await manageRulesUseCase.toggleRule(rule.id, !rule.enabled);
     setRules((prev) => prev.map((r) => (r.id === rule.id ? updated : r)));
     showToast(`Regla "${rule.name}" ${updated.enabled ? 'activada' : 'desactivada'}`, "info");
   };
@@ -75,10 +77,11 @@ export const PatternsPage: React.FC = () => {
                 </div>
 
                 {/* Enable / Disable switch */}
-                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <label className={`relative inline-flex items-center shrink-0 ${permissions.canManageRules ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}>
                   <input
                     type="checkbox"
                     checked={rule.enabled}
+                    disabled={!permissions.canManageRules}
                     onChange={() => toggleRuleEnabled(rule)}
                     className="sr-only peer"
                   />

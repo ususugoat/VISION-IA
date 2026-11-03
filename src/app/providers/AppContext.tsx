@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import {
+import type {
   UserProfile,
   UserRole,
   AnalysisRecord,
@@ -12,9 +12,16 @@ import {
 } from '../../core/domain/types';
 import { DEFAULT_USERS } from '../../core/domain/seedData';
 import { LocalAnalysisRepository } from '../../infrastructure/persistence/LocalAnalysisRepository';
-import { VisionEngine } from '../../core/ports/VisionEngine';
+import type { VisionEngine } from '../../core/ports/VisionEngine';
 import { DemoVisionAdapter } from '../../infrastructure/vision/DemoVisionAdapter';
 import { ApiVisionAdapter } from '../../infrastructure/vision/ApiVisionAdapter';
+
+// Application Use Cases
+import { AnalyzeImageUseCase } from '../../core/application/AnalyzeImage';
+import { GetDashboardUseCase } from '../../core/application/GetDashboard';
+import { SearchHistoryUseCase } from '../../core/application/SearchHistory';
+import { ManageRulesUseCase } from '../../core/application/ManageRules';
+import { UpdateAlertStatusUseCase } from '../../core/application/UpdateAlertStatus';
 
 export type NavigationPage =
   | 'dashboard'
@@ -27,7 +34,8 @@ export type NavigationPage =
   | 'scenarios'
   | 'classes'
   | 'rules'
-  | 'settings';
+  | 'settings'
+  | 'procedures_manual';
 
 export interface ToastMessage {
   id: string;
@@ -84,7 +92,7 @@ export const DEMO_TOUR_STEPS: DemoStep[] = [
     title: "6. Operaciones & Trazabilidad de Alertas",
     description: "Dirígete al módulo de Alertas para auditar el incidente. Cambia el estado a 'Revisada' y agrega una nota técnica.",
     targetPage: "alerts",
-    actionHint: "Pulsa 'Revisar Alerta' y actualiza el estado.",
+    actionHint: "Pulsa 'Revisar Incidente' y actualiza el estado.",
   },
   {
     step: 7,
@@ -102,6 +110,16 @@ export const DEMO_TOUR_STEPS: DemoStep[] = [
   },
 ];
 
+export interface RolePermissions {
+  canRunAnalysis: boolean;
+  canReviewAlerts: boolean;
+  canManageRules: boolean;
+  canEditClasses: boolean;
+  canChangeEngine: boolean;
+  canDeleteAnalysis: boolean;
+  canExportData: boolean;
+}
+
 interface AppContextValue {
   currentUser: UserProfile;
   setCurrentUser: (user: UserProfile) => void;
@@ -116,11 +134,21 @@ interface AppContextValue {
   toasts: ToastMessage[];
   showToast: (message: string, type?: ToastMessage['type']) => void;
   removeToast: (id: string) => void;
-  activeDemoStep: number | null; // 1..8 or null
+  activeDemoStep: number | null;
   startDemoTour: () => void;
   nextDemoStep: () => void;
   prevDemoStep: () => void;
   stopDemoTour: () => void;
+
+  // Permissions
+  permissions: RolePermissions;
+
+  // Use Cases
+  analyzeImageUseCase: AnalyzeImageUseCase;
+  getDashboardUseCase: GetDashboardUseCase;
+  searchHistoryUseCase: SearchHistoryUseCase;
+  manageRulesUseCase: ManageRulesUseCase;
+  updateAlertStatusUseCase: UpdateAlertStatusUseCase;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -139,9 +167,87 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const visionEngine: VisionEngine = engineMode === 'demo' ? demoEngine : apiEngine;
 
+  // Application Use Cases
+  const analyzeImageUseCase = useMemo(
+    () => new AnalyzeImageUseCase(visionEngine, repository),
+    [visionEngine, repository]
+  );
+  const getDashboardUseCase = useMemo(
+    () => new GetDashboardUseCase(repository),
+    [repository]
+  );
+  const searchHistoryUseCase = useMemo(
+    () => new SearchHistoryUseCase(repository),
+    [repository]
+  );
+  const manageRulesUseCase = useMemo(
+    () => new ManageRulesUseCase(repository),
+    [repository]
+  );
+  const updateAlertStatusUseCase = useMemo(
+    () => new UpdateAlertStatusUseCase(repository),
+    [repository]
+  );
+
+  // Compute permissions according to role (Section 7.5 of Manual)
+  const permissions: RolePermissions = useMemo(() => {
+    switch (currentUser.role) {
+      case 'admin':
+        return {
+          canRunAnalysis: true,
+          canReviewAlerts: true,
+          canManageRules: true,
+          canEditClasses: true,
+          canChangeEngine: true,
+          canDeleteAnalysis: true,
+          canExportData: true,
+        };
+      case 'supervisor':
+        return {
+          canRunAnalysis: true,
+          canReviewAlerts: true,
+          canManageRules: true,
+          canEditClasses: false,
+          canChangeEngine: false,
+          canDeleteAnalysis: false,
+          canExportData: true,
+        };
+      case 'operator':
+        return {
+          canRunAnalysis: true,
+          canReviewAlerts: false, // can only view and report
+          canManageRules: false,
+          canEditClasses: false,
+          canChangeEngine: false,
+          canDeleteAnalysis: false,
+          canExportData: true,
+        };
+      case 'auditor':
+        return {
+          canRunAnalysis: false, // read-only auditing and history export
+          canReviewAlerts: false,
+          canManageRules: false,
+          canEditClasses: false,
+          canChangeEngine: false,
+          canDeleteAnalysis: false,
+          canExportData: true,
+        };
+      default:
+        return {
+          canRunAnalysis: true,
+          canReviewAlerts: true,
+          canManageRules: true,
+          canEditClasses: true,
+          canChangeEngine: true,
+          canDeleteAnalysis: true,
+          canExportData: true,
+        };
+    }
+  }, [currentUser.role]);
+
   const refreshKPIs = async () => {
     try {
-      const data = await repository.getDashboardKPIs();
+      const data = await getDashboardUseCase.execute();
       setKpis(data);
     } catch (e) {
       console.error("Error refreshing KPIs", e);
@@ -150,7 +256,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   useEffect(() => {
     refreshKPIs();
-  }, [repository]);
+  }, [getDashboardUseCase]);
 
   const showToast = (message: string, type: ToastMessage['type'] = 'info') => {
     const id = `toast_${Date.now()}_${Math.random()}`;
@@ -217,6 +323,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         nextDemoStep,
         prevDemoStep,
         stopDemoTour,
+        permissions,
+        analyzeImageUseCase,
+        getDashboardUseCase,
+        searchHistoryUseCase,
+        manageRulesUseCase,
+        updateAlertStatusUseCase,
       }}
     >
       {children}
@@ -231,4 +343,3 @@ export const useApp = () => {
   }
   return context;
 };
-
