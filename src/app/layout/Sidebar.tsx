@@ -15,7 +15,8 @@ import {
   Settings,
   ShieldCheck,
   BookOpen,
-  Lock,
+  MonitorCheck,
+  Cctv,
 } from 'lucide-react';
 import { cn } from '../../shared/utils/cn';
 
@@ -25,6 +26,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   badge?: string | number;
   requiresPermission?: string;
+  highlight?: boolean;
 }
 
 interface NavSection {
@@ -43,8 +45,20 @@ export const Sidebar: React.FC = () => {
       ],
     },
     {
+      title: "Análisis en Vivo",
+      items: [
+        {
+          id: 'live_monitor',
+          label: 'Monitoreo en Vivo',
+          icon: Cctv,
+          highlight: true,
+        },
+      ],
+    },
+    {
       title: "Análisis Visual",
       items: [
+        { id: 'scenarios', label: 'Galería de Escenarios', icon: FolderKanban },
         { id: 'analysis', label: 'Centro de Análisis', icon: ScanEye },
       ],
     },
@@ -71,7 +85,6 @@ export const Sidebar: React.FC = () => {
     {
       title: "Administración",
       items: [
-        { id: 'scenarios', label: 'Galería de Escenarios', icon: FolderKanban },
         { id: 'classes', label: 'Catálogo de Clases', icon: Tags },
         { id: 'rules', label: 'Reglas de Detección', icon: Sliders },
         { id: 'settings', label: 'Configuración & IA', icon: Settings },
@@ -96,11 +109,11 @@ export const Sidebar: React.FC = () => {
           <div className="flex items-center gap-1.5">
             <span className="font-bold tracking-tight text-white text-base">VISION AI</span>
             <span className="text-[10px] font-semibold bg-cyan-500/20 text-cyan-300 px-1.5 py-0.2 rounded border border-cyan-500/30">
-              v1.0
+              v2.0
             </span>
           </div>
           <span className="text-[10px] text-slate-400 tracking-wider uppercase font-medium">
-            Análisis Visual Empresarial
+            Monitoreo Tiempo Real
           </span>
         </div>
       </div>
@@ -122,13 +135,31 @@ export const Sidebar: React.FC = () => {
                   className={cn(
                     "w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group",
                     isActive
-                      ? "bg-blue-600 text-white shadow-sm shadow-blue-600/30"
+                      ? item.highlight
+                        ? "bg-rose-600 text-white shadow-sm shadow-rose-600/30"
+                        : "bg-blue-600 text-white shadow-sm shadow-blue-600/30"
+                      : item.highlight
+                      ? "text-rose-400 hover:text-white hover:bg-rose-900/40 border border-rose-700/30"
                       : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
                   )}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className={cn("w-4 h-4", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200")} />
+                    <Icon
+                      className={cn(
+                        "w-4 h-4",
+                        isActive
+                          ? "text-white"
+                          : item.highlight
+                          ? "text-rose-400 group-hover:text-white"
+                          : "text-slate-400 group-hover:text-slate-200"
+                      )}
+                    />
                     <span>{item.label}</span>
+                    {item.highlight && !isActive && (
+                      <span className="flex items-center">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                      </span>
+                    )}
                   </div>
                   {item.badge !== undefined && (
                     <span
@@ -152,7 +183,7 @@ export const Sidebar: React.FC = () => {
         <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-[10px] text-slate-400 uppercase font-semibold">Motor Activo</span>
-            <span className="text-xs font-medium text-cyan-300">Simulación Local</span>
+            <span className="text-xs font-medium text-cyan-300">Nexus-YOLO v8 Demo</span>
           </div>
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
         </div>

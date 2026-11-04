@@ -7,6 +7,7 @@ import { ToastContainer } from './ToastContainer';
 
 // Pages
 import { DashboardPage } from '../../modules/dashboard/pages/DashboardPage';
+import { LiveMonitorPage } from '../../modules/live-monitor/LiveMonitorPage';
 import { AnalysisPage } from '../../modules/analysis/pages/AnalysisPage';
 import { DetectionsPage } from '../../modules/detections/pages/DetectionsPage';
 import { SegmentationPage } from '../../modules/segmentation/pages/SegmentationPage';
@@ -25,6 +26,8 @@ export const AppShell: React.FC = () => {
     switch (currentPage) {
       case 'dashboard':
         return <DashboardPage />;
+      case 'live_monitor':
+        return <LiveMonitorPage />;
       case 'analysis':
         return <AnalysisPage />;
       case 'detections_explorer':
@@ -78,4 +81,3 @@ export const AppShell: React.FC = () => {
     </div>
   );
 };
-

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useApp } from '../../../app/providers/AppContext';
 import {
   ScanEye,
+  Cctv,
   Crosshair,
   BellRing,
   Gauge,
@@ -142,6 +143,34 @@ export const DashboardPage: React.FC = () => {
           >
             Nuevo Análisis Visual
           </Button>
+        </div>
+      </div>
+
+
+      {/* Live Monitor Quick Access */}
+      <div className="bg-gradient-to-r from-zinc-900 to-slate-900 rounded-xl border border-slate-800 p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Cctv className="w-4 h-4 text-cyan-400" />
+          <span className="text-sm font-semibold text-slate-200">Monitoreo en Vivo</span>
+          <span className="ml-auto text-[10px] font-mono text-cyan-500 bg-cyan-950/40 border border-cyan-800/40 px-2 py-0.5 rounded">MODO DEMO</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {[
+            { code: "PC", label: "Oficina Tecnologica", sub: "Bebidas, espacio personal, armario de red", border: "border-blue-800/40 hover:border-blue-600/60" },
+            { code: "DC", label: "Data Center", sub: "Credenciales, racks, pasillo caliente", border: "border-violet-800/40 hover:border-violet-600/60" },
+            { code: "QA", label: "Laboratorio QA", sub: "Guantes ESD, contaminantes, almacen", border: "border-emerald-800/40 hover:border-emerald-600/60" },
+            { code: "MT", label: "Sala de Reuniones", sub: "Aforo, camara, equipo AV", border: "border-amber-800/40 hover:border-amber-600/60" },
+          ].map(({ code, label, sub, border }) => (
+            <button
+              key={label}
+              onClick={() => setCurrentPage("live_monitor")}
+              className={`text-left p-3 rounded-lg border bg-zinc-900/60 ${border} transition-all group`}
+            >
+              <div className="text-xs font-bold font-mono text-zinc-500 mb-1">[{code}]</div>
+              <div className="text-xs font-semibold text-slate-200 group-hover:text-white transition-colors leading-tight mb-1">{label}</div>
+              <div className="text-[10px] text-slate-500 leading-tight">{sub}</div>
+            </button>
+          ))}
         </div>
       </div>
 

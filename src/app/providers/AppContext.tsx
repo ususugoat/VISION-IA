@@ -25,6 +25,7 @@ import { UpdateAlertStatusUseCase } from '../../core/application/UpdateAlertStat
 
 export type NavigationPage =
   | 'dashboard'
+  | 'live_monitor'
   | 'analysis'
   | 'detections_explorer'
   | 'segmentation_explorer'
@@ -67,7 +68,7 @@ export const DEMO_TOUR_STEPS: DemoStep[] = [
     actionHint: "Verifica que el modo esté en 'Combinado' y pulsa 'Ejecutar Análisis'.",
   },
   {
-    step: 3,
+    step: 4,
     title: "3. Simulación de Inferencia y Overlays",
     description: "Observa la barra de progreso por etapas (Validación -> Detección -> Segmentación -> Patrones) y el renderizado sobre el canvas.",
     targetPage: "analysis",
@@ -82,28 +83,28 @@ export const DEMO_TOUR_STEPS: DemoStep[] = [
   },
   {
     step: 5,
-    title: "5. Reconocimiento de Patrones y Evidencia",
+    title: "6. Reconocimiento de Patrones y Evidencia",
     description: "Observa el patrón de incumplimiento EPP: operario 2 sin casco ni chaleco con nivel de confianza explicable del 91%.",
     targetPage: "analysis",
     actionHint: "Haz clic en la pestaña 'Patrones' para ver la evidencia generada.",
   },
   {
     step: 6,
-    title: "6. Operaciones & Trazabilidad de Alertas",
+    title: "7. Operaciones & Trazabilidad de Alertas",
     description: "Dirígete al módulo de Alertas para auditar el incidente. Cambia el estado a 'Revisada' y agrega una nota técnica.",
     targetPage: "alerts",
     actionHint: "Pulsa 'Revisar Incidente' y actualiza el estado.",
   },
   {
     step: 7,
-    title: "7. Historial y Exportación de Datos CSV",
+    title: "8. Historial y Exportación de Datos CSV",
     description: "Consulta el registro histórico inmutable, filtra por escenario o estado y descarga el reporte consolidado en CSV.",
     targetPage: "history",
     actionHint: "Haz clic en 'Exportar CSV' para descargar los datos.",
   },
   {
     step: 8,
-    title: "8. Arquitectura y Conexión de IA Real",
+    title: "9. Arquitectura y Conexión de IA Real",
     description: "Comprueba cómo el contrato VisionEngine permite sustituir el DemoVisionAdapter por ApiVisionAdapter (FastAPI + YOLO/SAM) sin reconstruir la UI.",
     targetPage: "settings",
     actionHint: "Revisa la configuración del motor de IA y el conmutador de backend.",

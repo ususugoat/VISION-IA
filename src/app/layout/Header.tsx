@@ -31,6 +31,7 @@ export const Header: React.FC = () => {
 
   const pageTitles: Record<NavigationPage, { title: string; category: string }> = {
     dashboard: { title: "Dashboard General & Métricas", category: "Resumen" },
+    live_monitor: { title: "Monitoreo en Vivo \u2014 Tiempo Real", category: "An\u00e1lisis en Vivo" },
     analysis: { title: "Centro de Análisis Visual", category: "Análisis Visual" },
     detections_explorer: { title: "Fundamentos de Detección & NMS", category: "Visión IA" },
     segmentation_explorer: { title: "Segmentación Semántica, de Instancia & Panóptica", category: "Visión IA" },
