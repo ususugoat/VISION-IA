@@ -23,8 +23,12 @@ import {
   Cpu,
   RefreshCw,
   FolderOpen,
+  Cctv,
+  ScanEye,
+
 } from 'lucide-react';
 import { CsvExportService } from '../../../infrastructure/export/CsvExportService';
+
 
 export const AnalysisPage: React.FC = () => {
   const {
@@ -35,7 +39,10 @@ export const AnalysisPage: React.FC = () => {
     engineMode,
     permissions,
     analyzeImageUseCase,
+    setCurrentPage,
   } = useApp();
+
+
 
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>('scen_seguridad');
@@ -200,6 +207,36 @@ export const AnalysisPage: React.FC = () => {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      {/* Inspección de Imágenes Header */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Badge variant="blue">Inspección de Imágenes</Badge>
+              <span className="text-xs text-slate-400 font-mono">Modo Clásico · Análisis Estático</span>
+            </div>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+              Inspección de Imágenes — Modo Clásico
+            </h2>
+            <p className="text-xs text-slate-600 max-w-3xl leading-relaxed">
+              Carga tus propias imágenes (JPG, PNG, WEBP, SVG) o selecciona escenarios industriales de planta para ejecutar detección de objetos, supresión no máxima (NMS), segmentación de máscaras y verificación de reglas de seguridad.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setCurrentPage('live_monitor')}
+              icon={<Cctv className="w-3.5 h-3.5 text-rose-500" />}
+              title="Ir a Monitoreo en Vivo"
+            >
+              Ir a Monitoreo en Vivo
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Top Configuration Bar */}
       <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-2xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">

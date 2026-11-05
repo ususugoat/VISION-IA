@@ -1,7 +1,10 @@
 // Domain Types & Entities according to VISION AI Functional Specification v1.0
 
-export type AnalysisMode = "detection" | "segmentation" | "patterns" | "combined";
+export type AnalysisMode = "detection" | "segmentation" | "patterns" | "combined" | "live";
 export type AnalysisStatus = "queued" | "processing" | "completed" | "failed";
+
+/** Discriminates how the record was originated */
+export type AnalysisSourceType = "static" | "live";
 
 export type UserRole = "admin" | "operator" | "supervisor" | "auditor";
 
@@ -151,6 +154,38 @@ export interface AnalysisRecord {
   confidenceThreshold: number;
   engineType: "demo" | "api";
   result?: VisionResult;
+
+  /** Marks whether this record came from a live monitoring session or static analysis */
+  sourceType?: AnalysisSourceType;
+
+  /** Snapshot of the LiveSession metadata when sourceType === 'live' */
+  liveSessionMeta?: {
+    sessionId: string;
+    cameraLabel: string;
+    aiModel: string;
+    totalFrames: number;
+    uniqueObjectsTracked: number;
+    startedAt: string;
+    endedAt?: string;
+  };
+
+  /** Live alerts captured during the session */
+  liveAlerts?: Array<{
+    id: string;
+    frameNumber: number;
+    timestamp: string;
+    severity: string;
+    status: string;
+    ruleId: string;
+    ruleName: string;
+    message: string;
+    evidence: string;
+    zoneId?: string;
+    zoneName?: string;
+    confidence: number;
+    triggerEntityLabel?: string;
+    notes?: string;
+  }>;
 }
 
 export interface DashboardKPIs {
@@ -165,4 +200,3 @@ export interface DashboardKPIs {
   recentAnalyses: AnalysisRecord[];
   recentAlerts: Alert[];
 }
-

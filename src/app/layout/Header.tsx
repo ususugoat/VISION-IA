@@ -31,14 +31,14 @@ export const Header: React.FC = () => {
 
   const pageTitles: Record<NavigationPage, { title: string; category: string }> = {
     dashboard: { title: "Dashboard General & Métricas", category: "Resumen" },
-    live_monitor: { title: "Monitoreo en Vivo \u2014 Tiempo Real", category: "An\u00e1lisis en Vivo" },
-    analysis: { title: "Centro de Análisis Visual", category: "Análisis Visual" },
+    analysis: { title: "Centro de Análisis Visual", category: "Análisis y Monitoreo" },
+    live_monitor: { title: "Monitoreo en Vivo — Tiempo Real", category: "Análisis y Monitoreo" },
+    scenarios: { title: "Galería de Escenarios Calibrados", category: "Análisis y Monitoreo" },
     detections_explorer: { title: "Fundamentos de Detección & NMS", category: "Visión IA" },
     segmentation_explorer: { title: "Segmentación Semántica, de Instancia & Panóptica", category: "Visión IA" },
     patterns_explorer: { title: "Reconocimiento de Patrones & Anomalías", category: "Visión IA" },
     alerts: { title: "Gestión & Trazabilidad de Alertas", category: "Operaciones" },
     history: { title: "Historial de Análisis & Exportación CSV", category: "Operaciones" },
-    scenarios: { title: "Galería de Escenarios Calibrados", category: "Administración" },
     classes: { title: "Catálogo de Clases & Taxonomía", category: "Administración" },
     rules: { title: "Reglas de Negocio & Detección", category: "Administración" },
     settings: { title: "Configuración de Sistema & Conexión de IA", category: "Administración" },
@@ -231,4 +231,3 @@ export const Header: React.FC = () => {
     </>
   );
 };
-

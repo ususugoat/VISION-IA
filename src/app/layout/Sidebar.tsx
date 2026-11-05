@@ -11,7 +11,6 @@ import {
   History,
   FolderKanban,
   Tags,
-  Sliders,
   Settings,
   ShieldCheck,
   BookOpen,
@@ -45,21 +44,16 @@ export const Sidebar: React.FC = () => {
       ],
     },
     {
-      title: "Análisis en Vivo",
+      title: "Análisis y Monitoreo",
       items: [
+        { id: 'analysis', label: 'Centro de Análisis', icon: ScanEye },
         {
           id: 'live_monitor',
           label: 'Monitoreo en Vivo',
           icon: Cctv,
           highlight: true,
         },
-      ],
-    },
-    {
-      title: "Análisis Visual",
-      items: [
         { id: 'scenarios', label: 'Galería de Escenarios', icon: FolderKanban },
-        { id: 'analysis', label: 'Centro de Análisis', icon: ScanEye },
       ],
     },
     {
@@ -86,7 +80,6 @@ export const Sidebar: React.FC = () => {
       title: "Administración",
       items: [
         { id: 'classes', label: 'Catálogo de Clases', icon: Tags },
-        { id: 'rules', label: 'Reglas de Detección', icon: Sliders },
         { id: 'settings', label: 'Configuración & IA', icon: Settings },
       ],
     },

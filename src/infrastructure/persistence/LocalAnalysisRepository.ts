@@ -4,6 +4,7 @@ import {
   Alert,
   DashboardKPIs,
   AlertStatus,
+  AlertSeverity,
   Scenario,
   VisionClass,
   BusinessRule,
@@ -60,7 +61,20 @@ export class LocalAnalysisRepository implements AnalysisRepository {
   async getAllAnalyses(filter?: AnalysisFilter): Promise<AnalysisRecord[]> {
     let list = this.getStorageItem<AnalysisRecord[]>(STORAGE_KEYS.ANALYSES, INITIAL_ANALYSES_SEED);
 
+    // Ensure live seed records are present if localStorage only had old static records
+    const hasLive = list.some((a) => a.sourceType === 'live');
+    if (!hasLive) {
+      const liveSeeds = INITIAL_ANALYSES_SEED.filter((a) => a.sourceType === 'live');
+      if (liveSeeds.length > 0) {
+        list = [...list, ...liveSeeds];
+        this.setStorageItem(STORAGE_KEYS.ANALYSES, list);
+      }
+    }
+
     if (filter) {
+      if (filter.sourceType && filter.sourceType !== 'all') {
+        list = list.filter((a) => (a.sourceType ?? 'static') === filter.sourceType);
+      }
       if (filter.query) {
         const q = filter.query.toLowerCase();
         list = list.filter(
@@ -68,20 +82,41 @@ export class LocalAnalysisRepository implements AnalysisRepository {
             a.id.toLowerCase().includes(q) ||
             a.sourceName.toLowerCase().includes(q) ||
             (a.scenarioName && a.scenarioName.toLowerCase().includes(q)) ||
-            a.createdBy.toLowerCase().includes(q)
+            a.createdBy.toLowerCase().includes(q) ||
+            (a.liveSessionMeta?.cameraLabel && a.liveSessionMeta.cameraLabel.toLowerCase().includes(q)) ||
+            (a.liveSessionMeta?.aiModel && a.liveSessionMeta.aiModel.toLowerCase().includes(q)) ||
+            (a.liveAlerts && a.liveAlerts.some((la) => la.ruleName.toLowerCase().includes(q) || la.message.toLowerCase().includes(q) || (la.triggerEntityLabel && la.triggerEntityLabel.toLowerCase().includes(q))))
         );
       }
       if (filter.scenarioId && filter.scenarioId !== "all") {
-        list = list.filter((a) => a.scenarioId === filter.scenarioId);
+        const targetId = filter.scenarioId;
+        list = list.filter((a) => {
+          if (a.scenarioId === targetId) return true;
+          const clean = (id?: string) => (id || '').replace(/^(scen_|live_)/, '');
+          const norm = (s: string) => (s === 'retail' || s === 'comercial' ? 'retail_common' : s);
+          return norm(clean(a.scenarioId)) === norm(clean(targetId));
+        });
       }
       if (filter.mode && filter.mode !== "all") {
-        list = list.filter((a) => a.mode === filter.mode);
+        if (filter.mode === 'live') {
+          list = list.filter((a) => a.sourceType === 'live' || a.mode === 'live');
+        } else {
+          list = list.filter((a) => a.mode === filter.mode);
+        }
       }
       if (filter.status && filter.status !== "all") {
         list = list.filter((a) => a.status === filter.status);
       }
       if (filter.minConfidence !== undefined) {
         list = list.filter((a) => a.averageConfidence >= filter.minConfidence!);
+      }
+      if (filter.startDate) {
+        const from = new Date(filter.startDate).getTime();
+        list = list.filter((a) => new Date(a.createdAt).getTime() >= from);
+      }
+      if (filter.endDate) {
+        const to = new Date(filter.endDate).getTime() + 86400000 - 1;
+        list = list.filter((a) => new Date(a.createdAt).getTime() <= to);
       }
     }
 
@@ -103,12 +138,26 @@ export class LocalAnalysisRepository implements AnalysisRepository {
     const alerts: Alert[] = [];
 
     for (const ana of analyses) {
-      if (ana.result && ana.result.alerts) {
+      if (ana.result && ana.result.alerts && ana.result.alerts.length > 0) {
         for (const alt of ana.result.alerts) {
           if (!alt.scenarioName && ana.scenarioName) {
             alt.scenarioName = ana.scenarioName;
           }
           alerts.push(alt);
+        }
+      } else if (ana.liveAlerts) {
+        for (const la of ana.liveAlerts) {
+          alerts.push({
+            id: la.id,
+            analysisId: ana.id,
+            ruleId: la.ruleId,
+            ruleName: la.ruleName,
+            severity: (la.severity as AlertSeverity) || 'medium',
+            message: la.message,
+            status: (la.status === 'resolved' ? 'cerrada' : la.status === 'acknowledged' ? 'revisada' : 'nueva') as AlertStatus,
+            createdAt: ana.createdAt,
+            scenarioName: ana.scenarioName,
+          });
         }
       }
     }
@@ -127,7 +176,7 @@ export class LocalAnalysisRepository implements AnalysisRepository {
     let foundAlert: Alert | null = null;
 
     for (const ana of analyses) {
-      if (ana.result && ana.result.alerts) {
+      if (ana.result && ana.result.alerts && ana.result.alerts.length > 0) {
         const alt = ana.result.alerts.find((a) => a.id === alertId);
         if (alt) {
           alt.status = status;

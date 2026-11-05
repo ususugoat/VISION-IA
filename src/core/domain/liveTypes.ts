@@ -34,10 +34,17 @@ export interface TrackedObject {
   confidence: number; // 0..1
   color: string;
   hasEPP?: boolean;        // has personal protective equipment
+  hasHelmet?: boolean;     // has certified safety helmet
+  hasVest?: boolean;       // has reflective safety vest
   hasCredential?: boolean; // has visible badge/credential
   hasESDGloves?: boolean;  // ESD-safe gloves for lab
   hasDrink?: boolean;      // carrying beverage (risk)
   hasFood?: boolean;       // carrying food (risk)
+  isDefective?: boolean;   // manufacturing defect detected
+  defectType?: 'scratch' | 'seal_defect' | 'level_anomaly' | string; // defect category
+  defectDetail?: string;   // detailed description of imperfection
+  inspectedThisPass?: boolean; // whether inspected during current pass on conveyor
+  vehicleType?: 'forklift' | 'cart';
   velocity: { vx: number; vy: number }; // movement vector
   occupiedZoneId?: string; // which zone this entity is in
   stateFrameCount: number; // frames in current state
@@ -61,6 +68,7 @@ export interface LiveAlert {
   zoneName?: string;
   confidence: number;
   screenshotFrame?: number; // frame number to reference
+  notes?: string;
 }
 
 export interface LiveFrame {
@@ -77,17 +85,22 @@ export interface LiveFrame {
   averageConfidence: number;
 }
 
+export type LiveEnvironmentType = 'classic' | 'technological';
+
 export interface LiveScenario {
   id: string;
   name: string;
   description: string;
   sector: string;
-  environment: 'office' | 'datacenter' | 'lab' | 'meeting_room';
+  environmentType: LiveEnvironmentType;
+  environment: 'office' | 'datacenter' | 'lab' | 'meeting_room' | 'industrial' | 'warehouse' | 'quality' | 'retail';
+  assetImage?: string; // Vector/bitmap asset for classic image scenarios
   cameraLabel: string;
   rules: LiveRule[];
   zones: Zone[];
   initialEntities: Omit<TrackedObject, 'stateFrameCount' | 'framesSinceAlert'>[];
   backgroundDescription: string; // what the scene looks like
+  caption?: string; // One-line subtitle caption displayed under the camera view
   aiModel: string; // e.g. "Nexus-YOLO v8"
   tags: string[];
 }

@@ -8,6 +8,7 @@ export interface AnalysisFilter {
   status?: string;
   startDate?: string;
   endDate?: string;
+  sourceType?: 'all' | 'static' | 'live';
 }
 
 export interface AnalysisRepository {

@@ -1,11 +1,141 @@
 import type { LiveScenario } from './liveTypes';
+import { SCENARIO_IMAGES } from './seedData';
 
 export const LIVE_SCENARIOS: LiveScenario[] = [
+  // =========================================================================
+  // ENTORNO CLÁSICO (INDUSTRIAL / IMÁGENES PRECALIBRADAS EN VIVO)
+  // =========================================================================
+  {
+    id: 'live_seguridad',
+    name: 'Seguridad Industrial & Prevención EPP (CCTV Planta)',
+    description: 'Supervisa en tiempo real la nave de producción industrial: comprueba que los operarios lleven puesto su casco y chaleco reflectivo reglamentario para prevenir accidentes fatales, y alerta de inmediato si alguien cruza la franja amarilla perimetral hacia maquinaria pesada o transita bajo cargas suspendidas.',
+    caption: 'Operarios en movimiento; uno trabaja sin EPP y otro cruza la planta periódicamente.',
+    sector: 'Manufactura & Minería',
+    environmentType: 'classic',
+    environment: 'industrial',
+    assetImage: SCENARIO_IMAGES.seguridad,
+    cameraLabel: 'CAM-IND01 · NAVE PRINCIPAL',
+    aiModel: 'Nexus-YOLO v8 Industrial · 94% prec',
+    backgroundDescription: 'Nave industrial con grúa aérea, tableros de control y franja amarilla perimetral de peligro.',
+    tags: ['EPP', 'casco', 'chaleco', 'seguridad-industrial', 'peligro'],
+    zones: [
+      { id: 'z_safe_work', label: 'Zona Operativa Segura', type: 'workspace', x: 0.15, y: 0.52, width: 0.65, height: 0.30, color: '#10b981', opacity: 0.08, strokeColor: '#10b981' },
+      { id: 'z_danger_line', label: 'Franja de Peligro (Línea Amarilla)', type: 'restricted', x: 0.0, y: 0.80, width: 1.0, height: 0.20, color: '#ef4444', opacity: 0.12, strokeColor: '#ef4444' },
+      { id: 'z_overhead_crane', label: 'Radio de Maquinaria Activa', type: 'restricted', x: 0.05, y: 0.35, width: 0.25, height: 0.45, color: '#eab308', opacity: 0.08, strokeColor: '#eab308' },
+    ],
+    rules: [
+      { id: 'r_no_epp_live', name: 'Operario sin EPP Completo', description: 'Operario detectado en planta sin casco normado o sin chaleco de alta visibilidad', severity: 'critical', enabled: true, cooldownFrames: 90, evaluator: 'missingPPE', threshold: 0.0 },
+      { id: 'r_danger_line_live', name: 'Invasión de Franja de Peligro', description: 'Persona cruzando la franja amarilla hacia área de maquinaria pesada', severity: 'high', enabled: true, cooldownFrames: 75, evaluator: 'dangerZoneIntrusion', threshold: 0.0 },
+      { id: 'r_crane_overhead', name: 'Tránsito bajo Carga Suspendida', description: 'Operario transitando debajo del radio activo de la grúa', severity: 'critical', enabled: true, cooldownFrames: 120, evaluator: 'overheadDanger', threshold: 0.0 },
+    ],
+    initialEntities: [
+      { id: 'e_work_ok', trackId: 'TRK-IND-01', classId: 'cls_persona', label: 'Operario (EPP Conforme)', state: 'walking', x: 0.22, y: 0.58, width: 0.08, height: 0.26, confidence: 0.96, color: '#10b981', hasEPP: true, hasHelmet: true, hasVest: true, velocity: { vx: 0.0012, vy: 0 }, occupiedZoneId: 'z_safe_work' },
+      { id: 'e_work_violator', trackId: 'TRK-IND-02', classId: 'cls_persona', label: 'Operario (SIN EPP - INFRACCIÓN)', state: 'walking', x: 0.61, y: 0.62, width: 0.09, height: 0.27, confidence: 0.93, color: '#ef4444', hasEPP: false, hasHelmet: false, hasVest: false, velocity: { vx: -0.0015, vy: 0 }, occupiedZoneId: 'z_danger_line' },
+      { id: 'e_supervisor', trackId: 'TRK-IND-03', classId: 'cls_persona', label: 'Operario (Casco Blanco)', state: 'standing', x: 0.43, y: 0.53, width: 0.07, height: 0.24, confidence: 0.95, color: '#3b82f6', hasEPP: true, hasHelmet: true, hasVest: true, velocity: { vx: 0, vy: 0 }, occupiedZoneId: 'z_safe_work' },
+      { id: 'e_worker_bg', trackId: 'TRK-IND-04', classId: 'cls_persona', label: 'Operario en Tránsito', state: 'walking', x: 0.29, y: 0.48, width: 0.07, height: 0.22, confidence: 0.91, color: '#10b981', hasEPP: true, hasHelmet: true, hasVest: true, velocity: { vx: 0.0008, vy: 0 }, occupiedZoneId: 'z_safe_work' },
+    ],
+  },
+
+  {
+    id: 'live_almacen',
+    name: 'Logística & Invasión de Zonas en Bodega (CCTV Racks)',
+    description: 'Controla el movimiento seguro entre montacargas y trabajadores en el almacén: emite una alerta si un vehículo de carga invade los pasillos peatonales protegidos, avisa si una persona camina dentro del radio de giro de la máquina y vigila la estabilidad de los pallets apilados.',
+    caption: 'El montacargas se desplaza y en su recorrido invade la zona restringida.',
+    sector: 'Almacén & Logística',
+    environmentType: 'classic',
+    environment: 'warehouse',
+    assetImage: SCENARIO_IMAGES.almacen,
+    cameraLabel: 'CAM-LOG02 · BODEGA CENTRAL',
+    aiModel: 'Nexus-YOLO v8 Logística · 93% prec',
+    backgroundDescription: 'Pasillo de bodega con estanterías pesadas (racks), línea de seguridad amarilla y montacargas.',
+    tags: ['montacargas', 'bodega', 'peatonal', 'logistica', 'racks'],
+    zones: [
+      { id: 'z_restricted_a', label: 'Zona restringida A', type: 'restricted', x: 0.46, y: 0.56, width: 0.42, height: 0.36, color: '#ef4444', opacity: 0.12, strokeColor: '#ef4444' },
+      { id: 'z_peatonal', label: 'Carril de Tránsito ML', type: 'safe_passage', x: 0.08, y: 0.52, width: 0.38, height: 0.40, color: '#10b981', opacity: 0.09, strokeColor: '#10b981' },
+      { id: 'z_racks', label: 'Estanterías Industriales A y B', type: 'workspace', x: 0.04, y: 0.12, width: 0.28, height: 0.35, color: '#8b5cf6', opacity: 0.07, strokeColor: '#8b5cf6' },
+    ],
+    rules: [
+      { id: 'r_forklift_intrusion', name: 'Objeto en zona restringida: Montacargas en Zona restringida A', description: 'Vehículo de carga invadiendo la zona delimitada para tránsito restringido', severity: 'high', enabled: true, cooldownFrames: 80, evaluator: 'forkliftIntrusion', threshold: 0.0 },
+      { id: 'r_pedestrian_maneuver', name: 'Peatón en Bahía de Maniobra', description: 'Persona no autorizada transitando en el radio de giro del montacargas', severity: 'high', enabled: true, cooldownFrames: 70, evaluator: 'unauthorizedZone', threshold: 0.0 },
+      { id: 'r_cargo_unstable', name: 'Carga Inestable en Horquilla', description: 'Pallet en horquilla inclinado fuera de norma de estabilidad ISO', severity: 'medium', enabled: true, cooldownFrames: 90, evaluator: 'cargoUnstable', threshold: 0.0 },
+    ],
+    initialEntities: [
+      { id: 'e_forklift', trackId: 'TRK-LOG-01', classId: 'cls_montacargas', label: 'Montacargas ML-02', state: 'walking', x: 0.38, y: 0.65, width: 0.20, height: 0.24, confidence: 0.93, color: '#f59e0b', vehicleType: 'forklift', velocity: { vx: 0.0018, vy: 0 }, occupiedZoneId: 'z_peatonal' },
+      { id: 'e_pallet_box', trackId: 'TRK-LOG-02', classId: 'cls_pallet', label: 'Pallet en Zona Restringida', state: 'seated_working', x: 0.54, y: 0.72, width: 0.10, height: 0.12, confidence: 0.95, color: '#ef4444', velocity: { vx: 0, vy: 0 }, occupiedZoneId: 'z_restricted_a' },
+    ],
+  },
+
+  {
+    id: 'live_calidad',
+    name: 'Inspección de Calidad en Banda (Línea de Ensamblaje)',
+    description: 'Inspecciona a alta velocidad cada botella sobre la faja transportadora: analiza la superficie para descubrir fisuras o rayones y alertar envases en mal estado, y verifica el sellado y nivel óptimo para notificar botellas en buen estado.',
+    caption: 'Control de calidad en banda: Detección óptica y alertas de botellas en mal estado vs notificación de botellas conformes.',
+    sector: 'Control de Calidad',
+    environmentType: 'classic',
+    environment: 'quality',
+    assetImage: SCENARIO_IMAGES.calidad,
+    cameraLabel: 'CAM-QC1 · VISION AI',
+    aiModel: 'Nexus-Transformer XL Industrial · 97% prec',
+    backgroundDescription: 'Banda transportadora con estación óptica automatizada CAM-QC1 para detección de botellas conformes y defectuosas.',
+    tags: ['control-calidad', 'defectos', 'rayones', 'botellas', 'conveyor'],
+    zones: [
+      { id: 'z_inspection_fov', label: 'Túnel de Inspección CAM-QC1', type: 'inspection_point', x: 0.28, y: 0.28, width: 0.24, height: 0.48, color: '#06b6d4', opacity: 0.12, strokeColor: '#06b6d4' },
+      { id: 'z_conveyor_in', label: 'Faja Transportadora', type: 'safe_passage', x: 0.05, y: 0.52, width: 0.90, height: 0.25, color: '#3b82f6', opacity: 0.07, strokeColor: '#3b82f6' },
+      { id: 'z_reject_chute', label: 'Panel de Calibración Óptica', type: 'restricted', x: 0.58, y: 0.35, width: 0.16, height: 0.26, color: '#10b981', opacity: 0.08, strokeColor: '#10b981' },
+    ],
+    rules: [
+      { id: 'r_scratch_defect', name: 'Defecto en Botella (Mal Estado)', description: 'Detección de imperfección, abolladura, rayón superficial o sellado anómalo superior al 1.5% de tolerancia', severity: 'critical', enabled: true, cooldownFrames: 20, evaluator: 'scratchDefect', threshold: 0.0 },
+      { id: 'r_bottle_conformity', name: 'Conformidad de Botella (Buen Estado)', description: 'Inspección óptica de envase en buen estado: sellado de tapa hermético, nivel de llenado óptimo y lote conforme', severity: 'low', enabled: true, cooldownFrames: 20, evaluator: 'bottleQuality', threshold: 0.0 },
+    ],
+    initialEntities: [
+      { id: 'e_bottle_1', trackId: 'TRK-QC-01', classId: 'cls_producto', label: 'Botella Aqua #01 (Buen Estado)', state: 'walking', x: 0.12, y: 0.62, width: 0.08, height: 0.22, confidence: 0.98, color: '#10b981', isDefective: false, velocity: { vx: 0.0025, vy: 0 }, occupiedZoneId: 'z_conveyor_in' },
+      { id: 'e_bottle_2', trackId: 'TRK-QC-02', classId: 'cls_producto', label: 'Botella Aqua #02 (MAL ESTADO)', state: 'walking', x: 0.25, y: 0.62, width: 0.08, height: 0.22, confidence: 0.97, color: '#ef4444', isDefective: true, defectType: 'scratch', defectDetail: 'Fisura superficial continua de 18.4mm en cuerpo', velocity: { vx: 0.0025, vy: 0 }, occupiedZoneId: 'z_conveyor_in' },
+      { id: 'e_bottle_3', trackId: 'TRK-QC-03', classId: 'cls_producto', label: 'Botella Aqua #03 (Buen Estado)', state: 'seated_working', x: 0.38, y: 0.62, width: 0.08, height: 0.22, confidence: 0.99, color: '#10b981', isDefective: false, velocity: { vx: 0.0025, vy: 0 }, occupiedZoneId: 'z_inspection_fov' },
+      { id: 'e_bottle_4', trackId: 'TRK-QC-04', classId: 'cls_producto', label: 'Botella Aqua #04 (Buen Estado)', state: 'walking', x: 0.51, y: 0.62, width: 0.08, height: 0.22, confidence: 0.96, color: '#10b981', isDefective: false, velocity: { vx: 0.0025, vy: 0 }, occupiedZoneId: 'z_conveyor_in' },
+      { id: 'e_bottle_5', trackId: 'TRK-QC-05', classId: 'cls_producto', label: 'Botella Aqua #05 (MAL ESTADO)', state: 'walking', x: 0.64, y: 0.62, width: 0.08, height: 0.22, confidence: 0.95, color: '#ef4444', isDefective: true, defectType: 'seal_defect', defectDetail: 'Tapa desalineada y sellado con microfuga', velocity: { vx: 0.0025, vy: 0 }, occupiedZoneId: 'z_conveyor_in' },
+      { id: 'e_bottle_6', trackId: 'TRK-QC-06', classId: 'cls_producto', label: 'Botella Aqua #06 (Buen Estado)', state: 'walking', x: 0.77, y: 0.62, width: 0.08, height: 0.22, confidence: 0.98, color: '#10b981', isDefective: false, velocity: { vx: 0.0025, vy: 0 }, occupiedZoneId: 'z_conveyor_in' },
+    ],
+  },
+
+  {
+    id: 'live_retail',
+    name: 'Flujo de Clientes & Aforo en Sala (CCTV Tienda)',
+    description: 'Monitorea el tránsito y la cantidad de compradores en la tienda: cuenta en vivo a los clientes para alertar si se genera sobreafluencia o aglomeración en pasillos estrechos, y mide el tiempo que pasan frente a las góndolas para mejorar el servicio y la reposición de productos.',
+    caption: 'Clientes que entran y salen del pasillo: la ocupación sube y baja',
+    sector: 'Retail Comercial',
+    environmentType: 'classic',
+    environment: 'retail',
+    assetImage: SCENARIO_IMAGES.retail,
+    cameraLabel: 'CAM-RET04 · PASILLO CENTRAL',
+    aiModel: 'Nexus-YOLO v8 Retail · 91% prec',
+    backgroundDescription: 'Pasillo de supermercado con góndolas a ambos lados y baldosas claras.',
+    tags: ['retail', 'aforo', 'flujo-clientes', 'gondolas', 'tiempo-espera'],
+    zones: [
+      { id: 'z_main_aisle', label: 'Pasillo Principal de Tránsito', type: 'safe_passage', x: 0.28, y: 0.35, width: 0.44, height: 0.55, color: '#3b82f6', opacity: 0.07, strokeColor: '#3b82f6' },
+      { id: 'z_shelf_left', label: 'Góndola A (Ofertas)', type: 'workspace', x: 0.04, y: 0.15, width: 0.22, height: 0.65, color: '#ef4444', opacity: 0.07, strokeColor: '#ef4444' },
+      { id: 'z_shelf_right', label: 'Góndola B (Bebidas)', type: 'restricted', x: 0.74, y: 0.15, width: 0.22, height: 0.65, color: '#2563eb', opacity: 0.07, strokeColor: '#2563eb' },
+    ],
+    rules: [
+      { id: 'r_retail_overcapacity', name: 'Sobreafluencia en Pasillo', description: 'Conteo de clientes mayor a 3 personas en un mismo sector de pasillo', severity: 'medium', enabled: true, cooldownFrames: 90, evaluator: 'retailOvercapacity', threshold: 3 },
+      { id: 'r_prolonged_loitering', name: 'Tiempo de Espera Excesivo', description: 'Cliente detenido por más de 45 segundos sin interacción en góndola', severity: 'low', enabled: true, cooldownFrames: 120, evaluator: 'prolongedAbsence', threshold: 45 },
+    ],
+    initialEntities: [
+      { id: 'e_shopper_1', trackId: 'TRK-RET-01', classId: 'cls_persona', label: 'Cliente (Rojo)', state: 'walking', x: 0.38, y: 0.66, width: 0.07, height: 0.24, confidence: 0.94, color: '#ef4444', velocity: { vx: 0.001, vy: 0 }, occupiedZoneId: 'z_main_aisle' },
+      { id: 'e_shopper_2', trackId: 'TRK-RET-02', classId: 'cls_persona', label: 'Cliente (Morado)', state: 'walking', x: 0.41, y: 0.72, width: 0.08, height: 0.26, confidence: 0.93, color: '#8b5cf6', velocity: { vx: -0.001, vy: 0 }, occupiedZoneId: 'z_main_aisle' },
+      { id: 'e_shopper_3', trackId: 'TRK-RET-03', classId: 'cls_persona', label: 'Cliente (Verde)', state: 'standing', x: 0.45, y: 0.66, width: 0.07, height: 0.24, confidence: 0.91, color: '#10b981', velocity: { vx: 0, vy: 0 }, occupiedZoneId: 'z_main_aisle' },
+      { id: 'e_shopper_4', trackId: 'TRK-RET-04', classId: 'cls_persona', label: 'Cliente (Oscuro)', state: 'walking', x: 0.48, y: 0.70, width: 0.08, height: 0.25, confidence: 0.92, color: '#334155', velocity: { vx: 0.0005, vy: 0 }, occupiedZoneId: 'z_main_aisle' },
+    ],
+  },
+
+  // =========================================================================
+  // ENTORNO TECNOLÓGICO (OFICINAS, DATA CENTER, LAB QA Y REUNIONES — SOLO EN VIVO)
+  // =========================================================================
   {
     id: 'live_office_tech',
     name: 'Oficina Tecnológica — Conducta y Ergonomía',
-    description: 'Monitoreo de estaciones de trabajo, desplazamiento de empleados, invasión de espacio personal y riesgos por bebidas/alimentos cerca de equipos.',
+    description: 'Supervisa en tiempo real las estaciones de trabajo de la oficina: detecta vasos con líquidos o bebidas cerca de computadoras y laptops para prevenir daños en equipos, vigila el espacio entre puestos y alerta si alguien ingresa al armario de servidores de red sin autorización.',
     sector: 'Tecnología Corporativa',
+    environmentType: 'technological',
     environment: 'office',
     cameraLabel: 'CAM-OF1 · VISION AI',
     aiModel: 'Nexus-YOLO v8 · 92% prec · 14ms',
@@ -32,11 +162,13 @@ export const LIVE_SCENARIOS: LiveScenario[] = [
       { id: 'e_emp4', trackId: 'TRK-004', classId: 'cls_employee', label: 'Empleado (Diego V.)', state: 'walking', x: 0.42, y: 0.72, width: 0.07, height: 0.17, confidence: 0.91, color: '#f59e0b', hasDrink: false, velocity: { vx: 0.003, vy: 0 }, occupiedZoneId: undefined },
     ],
   },
+
   {
     id: 'live_datacenter',
     name: 'Data Center — Control de Acceso y Temperatura',
-    description: 'Supervisión de acceso a racks de servidores, detección de técnicos sin credencial visible, puertas abiertas prolongadas y zonas de alta temperatura.',
+    description: 'Controla la seguridad física de los servidores: detecta si entra personal sin fotocheck o credencial visible, vigila el acceso a los racks de servidores y alerta si una persona se queda demasiado tiempo en el pasillo caliente de alta temperatura para proteger su salud.',
     sector: 'Infraestructura TI',
+    environmentType: 'technological',
     environment: 'datacenter',
     cameraLabel: 'CAM-DC1 · VISION AI',
     aiModel: 'Nexus-YOLO v8 · 92% prec · 14ms',
@@ -53,21 +185,21 @@ export const LIVE_SCENARIOS: LiveScenario[] = [
     rules: [
       { id: 'r_no_credential', name: 'Técnico sin Credencial Visible', description: 'Persona en zona de racks sin credencial/badge detectado', severity: 'critical', enabled: true, cooldownFrames: 100, evaluator: 'noCredential', threshold: 0.0 },
       { id: 'r_hot_aisle', name: 'Permanencia en Pasillo Caliente', description: 'Persona en pasillo caliente (>40°C simulado) por más de 5 segundos', severity: 'high', enabled: true, cooldownFrames: 75, evaluator: 'hotAisleExposure', threshold: 30 },
-      { id: 'r_rack_open', name: 'Rack Abierto sin Supervisión', description: 'Rack abierto detectado sin técnico en campo visual de trabajo', severity: 'medium', enabled: true, cooldownFrames: 90, evaluator: 'rackOpenUnsupervised', threshold: 60 },
       { id: 'r_unauthorized_dc', name: 'Acceso No Autorizado al Data Center', description: 'Persona sin credencial intentando ingresar a zona de acceso controlado', severity: 'critical', enabled: true, cooldownFrames: 150, evaluator: 'unauthorizedZone', threshold: 0.0 },
     ],
     initialEntities: [
       { id: 'e_tech1', trackId: 'TRK-101', classId: 'cls_technician', label: 'Técnico (Manuel A.)', state: 'standing', x: 0.17, y: 0.52, width: 0.065, height: 0.19, confidence: 0.95, color: '#06b6d4', hasCredential: true, velocity: { vx: 0, vy: 0 }, occupiedZoneId: 'z_rack_row_a' },
       { id: 'e_tech2', trackId: 'TRK-102', classId: 'cls_technician', label: 'Técnico (Sofia L.)', state: 'walking', x: 0.65, y: 0.45, width: 0.065, height: 0.19, confidence: 0.93, color: '#8b5cf6', hasCredential: false, velocity: { vx: -0.004, vy: 0.001 }, occupiedZoneId: undefined },
       { id: 'e_tech3', trackId: 'TRK-103', classId: 'cls_technician', label: 'Técnico (Roberto F.)', state: 'interacting', x: 0.49, y: 0.52, width: 0.065, height: 0.19, confidence: 0.97, color: '#10b981', hasCredential: true, velocity: { vx: 0, vy: 0 }, occupiedZoneId: 'z_rack_row_b' },
-      { id: 'e_visitor', trackId: 'TRK-104', classId: 'cls_visitor', label: 'Visitante No Identificado', state: 'walking', x: 0.80, y: 0.30, width: 0.065, height: 0.19, confidence: 0.88, color: '#f59e0b', hasCredential: false, velocity: { vx: -0.002, vy: 0.003 }, occupiedZoneId: undefined },
     ],
   },
+
   {
     id: 'live_qa_lab',
     name: 'Laboratorio de QA — Manipulación de Equipos',
-    description: 'Control de manipulación segura de dispositivos electrónicos: guantes ESD, ausencia de alimentos/bebidas, posición correcta de equipos.',
+    description: 'Supervisa la manipulación de piezas electrónicas delicadas: comprueba que los técnicos utilicen guantes antiestáticos obligatorios para no dañar los circuitos por descargas, prohíbe alimentos y bebidas en las mesas de prueba y cuida el almacén de componentes.',
     sector: 'Control de Calidad TI',
+    environmentType: 'technological',
     environment: 'lab',
     cameraLabel: 'CAM-QA1 · VISION AI',
     aiModel: 'Nexus-Transformer XL · 97% prec · 31ms',
@@ -83,7 +215,6 @@ export const LIVE_SCENARIOS: LiveScenario[] = [
     rules: [
       { id: 'r_no_esd_gloves', name: 'Manipulación sin Guantes ESD', description: 'Técnico manipulando equipo electrónico sin guantes antiestáticos detectados', severity: 'high', enabled: true, cooldownFrames: 80, evaluator: 'noESDGloves', threshold: 0.0 },
       { id: 'r_food_lab', name: 'Alimento/Bebida en Laboratorio', description: 'Comida o bebida detectada en zona de equipos sensibles', severity: 'high', enabled: true, cooldownFrames: 60, evaluator: 'foodInLab', threshold: 0.0 },
-      { id: 'r_device_fallen', name: 'Dispositivo en Posición Irregular', description: 'Dispositivo bajo prueba detectado caído o en orientación incorrecta', severity: 'medium', enabled: true, cooldownFrames: 90, evaluator: 'deviceFallen', threshold: 0.0 },
       { id: 'r_unauthorized_storage', name: 'Acceso no Autorizado a Almacén', description: 'Técnico sin autorización accediendo al almacén de componentes críticos', severity: 'critical', enabled: true, cooldownFrames: 120, evaluator: 'unauthorizedZone', threshold: 0.0 },
     ],
     initialEntities: [
@@ -92,11 +223,13 @@ export const LIVE_SCENARIOS: LiveScenario[] = [
       { id: 'e_qa3', trackId: 'TRK-203', classId: 'cls_qa_tech', label: 'Técnico QA (Valentina C.)', state: 'walking', x: 0.75, y: 0.75, width: 0.07, height: 0.18, confidence: 0.92, color: '#f59e0b', hasESDGloves: true, hasDrink: false, velocity: { vx: -0.002, vy: -0.003 }, occupiedZoneId: undefined },
     ],
   },
+
   {
     id: 'live_meeting_room',
     name: 'Sala de Reuniones — Ocupación y Videoconferencia',
-    description: 'Control de aforo máximo, detección de obstrucción de cámara, equipos AV desconectados durante reunión y uso de sala sin reserva.',
+    description: 'Gestiona el orden y la capacidad en salas de videoconferencia: cuenta automáticamente las personas presentes para que no se exceda el aforo máximo permitido (máx. 6) y emite una alerta si alguien o un objeto bloquea la cámara de la videollamada.',
     sector: 'Gestión de Espacios',
+    environmentType: 'technological',
     environment: 'meeting_room',
     cameraLabel: 'CAM-MR1 · VISION AI',
     aiModel: 'Nexus-Lite Edge · 85% prec · 7ms',
@@ -111,15 +244,12 @@ export const LIVE_SCENARIOS: LiveScenario[] = [
     rules: [
       { id: 'r_overcapacity', name: 'Aforo Excedido', description: 'Número de personas en sala superior al máximo permitido (6 personas)', severity: 'medium', enabled: true, cooldownFrames: 120, evaluator: 'overcapacity', threshold: 6 },
       { id: 'r_camera_blocked', name: 'Obstrucción de Cámara', description: 'Persona o objeto detectado bloqueando el campo de visión de la cámara de videoconferencia', severity: 'medium', enabled: true, cooldownFrames: 60, evaluator: 'cameraBlocked', threshold: 0.0 },
-      { id: 'r_av_disconnected', name: 'Equipo AV Desconectado en Reunión', description: 'Pantalla o cámara AV no operativa con personas presentes en sala', severity: 'low', enabled: true, cooldownFrames: 150, evaluator: 'avDisconnected', threshold: 0.0 },
-      { id: 'r_unauthorized_meeting', name: 'Sala Ocupada sin Reserva', description: 'Ocupación detectada fuera de horario de reserva registrado', severity: 'low', enabled: true, cooldownFrames: 200, evaluator: 'unauthorizedMeeting', threshold: 0.0 },
     ],
     initialEntities: [
       { id: 'e_att1', trackId: 'TRK-301', classId: 'cls_attendee', label: 'Asistente 1', state: 'seated_working', x: 0.25, y: 0.42, width: 0.07, height: 0.17, confidence: 0.94, color: '#3b82f6', velocity: { vx: 0, vy: 0 }, occupiedZoneId: 'z_meeting_table' },
       { id: 'e_att2', trackId: 'TRK-302', classId: 'cls_attendee', label: 'Asistente 2', state: 'seated_working', x: 0.38, y: 0.42, width: 0.07, height: 0.17, confidence: 0.96, color: '#8b5cf6', velocity: { vx: 0, vy: 0 }, occupiedZoneId: 'z_meeting_table' },
       { id: 'e_att3', trackId: 'TRK-303', classId: 'cls_attendee', label: 'Asistente 3', state: 'seated_working', x: 0.51, y: 0.42, width: 0.07, height: 0.17, confidence: 0.95, color: '#10b981', velocity: { vx: 0, vy: 0 }, occupiedZoneId: 'z_meeting_table' },
       { id: 'e_presenter', trackId: 'TRK-304', classId: 'cls_presenter', label: 'Presentador (Mgr. Torres)', state: 'standing', x: 0.70, y: 0.42, width: 0.07, height: 0.17, confidence: 0.98, color: '#f59e0b', velocity: { vx: 0, vy: 0 }, occupiedZoneId: 'z_meeting_table' },
-      { id: 'e_att4', trackId: 'TRK-305', classId: 'cls_attendee', label: 'Asistente 4', state: 'walking', x: 0.12, y: 0.13, width: 0.07, height: 0.17, confidence: 0.89, color: '#06b6d4', velocity: { vx: 0.003, vy: 0 }, occupiedZoneId: 'z_camera_view' },
     ],
   },
 ];

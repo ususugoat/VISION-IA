@@ -218,6 +218,50 @@ export class SceneSimulator {
   }
 
   private applyMovement(entity: TrackedObject, state: SimulationState): void {
+    // Scenario: Quality Control - Bottles move on endless conveyor belt
+    if (state.scenarioId === 'live_calidad') {
+      entity.x += 0.0025;
+      if (entity.x > 0.88) {
+        entity.x = 0.08;
+        entity.inspectedThisPass = false;
+      }
+      if (entity.x < 0.25) {
+        entity.inspectedThisPass = false;
+      }
+      return;
+    }
+
+    // Scenario: Warehouse - Forklift patrols back and forth into restricted zone
+    if (state.scenarioId === 'live_almacen') {
+      if (entity.classId === 'cls_montacargas' || entity.vehicleType === 'forklift') {
+        entity.x += entity.velocity.vx;
+        if (entity.x >= 0.54) {
+          entity.velocity.vx = -0.0016;
+        } else if (entity.x <= 0.28) {
+          entity.velocity.vx = 0.0016;
+        }
+        return;
+      }
+    }
+
+    // Scenario: Retail - Shoppers browse within aisle boundaries
+    if (state.scenarioId === 'live_retail') {
+      entity.x = clamp(entity.x + entity.velocity.vx, 0.32, 0.58);
+      entity.y = clamp(entity.y + entity.velocity.vy, 0.55, 0.82);
+      if (entity.x <= 0.33 || entity.x >= 0.57) entity.velocity.vx *= -1;
+      if (entity.y <= 0.56 || entity.y >= 0.81) entity.velocity.vy *= -1;
+      return;
+    }
+
+    // Scenario: Industrial - Workers patrol floor
+    if (state.scenarioId === 'live_seguridad') {
+      entity.x = clamp(entity.x + entity.velocity.vx, 0.15, 0.82);
+      entity.y = clamp(entity.y + entity.velocity.vy, 0.46, 0.76);
+      if (entity.x <= 0.16 || entity.x >= 0.81) entity.velocity.vx *= -1;
+      if (entity.y <= 0.47 || entity.y >= 0.75) entity.velocity.vy *= -1;
+      return;
+    }
+
     if (entity.state !== 'walking') {
       entity.velocity = { vx: entity.velocity.vx * 0.85, vy: entity.velocity.vy * 0.85 };
     }
@@ -248,6 +292,137 @@ export class SceneSimulator {
       let evidence = '';
 
       switch (rule.evaluator) {
+        case 'missingPPE': {
+          for (const entity of state.entities) {
+            if (entity.hasEPP === false || entity.hasHelmet === false) {
+              triggered = true;
+              triggerEntity = entity;
+              triggerZone = state.zones.find((z) => z.id === entity.occupiedZoneId) || state.zones[0];
+              message = `${entity.label} sin EPP reglamentario (Casco / Chaleco) detectado en planta`;
+              evidence = `Infracción normativa ISO 45001 / OSHA. Silueta humana sin casco tipo ANSI Z89.1 ni reflectivo de alta visibilidad. Confianza: ${(entity.confidence * 100).toFixed(0)}%`;
+              break;
+            }
+          }
+          break;
+        }
+
+        case 'dangerZoneIntrusion': {
+          for (const entity of state.entities) {
+            const dangerZone = state.zones.find((z) => z.id === 'z_danger_line' || z.type === 'restricted');
+            if (dangerZone && (entity.occupiedZoneId === dangerZone.id || entityInZone(entity, dangerZone))) {
+              triggered = true;
+              triggerEntity = entity;
+              triggerZone = dangerZone;
+              message = `${entity.label} sobrepasó la franja amarilla perimetral hacia área de maquinaria activa`;
+              evidence = `Invasión espacial de zona de riesgo crítico. Coordenadas x=${(entity.x * 100).toFixed(1)}%, y=${(entity.y * 100).toFixed(1)}%. Fotograma #${state.frameNumber}`;
+              break;
+            }
+          }
+          break;
+        }
+
+        case 'overheadDanger': {
+          const craneZone = state.zones.find((z) => z.id === 'z_overhead_crane');
+          if (craneZone) {
+            for (const entity of state.entities) {
+              if (entityInZone(entity, craneZone)) {
+                triggered = true;
+                triggerEntity = entity;
+                triggerZone = craneZone;
+                message = `${entity.label} transitando en radio de operación de grúa aérea`;
+                evidence = `Riesgo crítico de caída de carga suspendida. Protocolo de detención automática emitido.`;
+                break;
+              }
+            }
+          }
+          break;
+        }
+
+        case 'forkliftIntrusion': {
+          const restrictedZone = state.zones.find((z) => z.id === 'z_restricted_a' || z.type === 'restricted');
+          if (restrictedZone) {
+            for (const entity of state.entities) {
+              if (entity.classId === 'cls_montacargas' || entity.vehicleType === 'forklift') {
+                if (entityInZone(entity, restrictedZone) || entity.occupiedZoneId === restrictedZone.id || entity.x >= 0.44) {
+                  triggered = true;
+                  triggerEntity = entity;
+                  triggerZone = restrictedZone;
+                  message = `Objeto en zona restringida: Montacargas en ${restrictedZone.label}`;
+                  evidence = `"Montacargas" (${Math.round(entity.confidence * 100)} %) con su punto de apoyo dentro de la zona "${restrictedZone.label}". Condición sostenida 1.5 s - fotograma #${state.frameNumber} (t = ${(state.frameNumber / 12).toFixed(1)} s).`;
+                  break;
+                }
+              }
+            }
+          }
+          break;
+        }
+
+        case 'cargoUnstable': {
+          for (const entity of state.entities) {
+            if (entity.vehicleType === 'forklift' || entity.classId === 'cls_montacargas') {
+              triggered = true;
+              triggerEntity = entity;
+              triggerZone = state.zones.find((z) => z.id === entity.occupiedZoneId);
+              message = `Alerta de estabilidad: Pallet en horquilla fuera del centro de gravedad seguro`;
+              evidence = `Inclinación lateral anómala detectada en horquilla del montacargas. Riesgo de vuelco de carga.`;
+              break;
+            }
+          }
+          break;
+        }
+
+        case 'scratchDefect': {
+          for (const entity of state.entities) {
+            // Se evalúa cuando una botella con defecto pasa por la estación de inspección CAM-QC1 (x entre 0.35 y 0.44)
+            if (entity.isDefective && entity.x >= 0.35 && entity.x <= 0.44 && !entity.inspectedThisPass) {
+              triggered = true;
+              triggerEntity = entity;
+              triggerZone = state.zones.find((z) => z.id === 'z_inspection_fov') || state.zones[0];
+              entity.inspectedThisPass = true;
+              message = `ALERTA: ${entity.label} en MAL ESTADO detectada (${entity.defectDetail || 'Fisura crítica superior al 1.5%'})`;
+              evidence = `Estación CAM-QC1 · Visión AI: Fallo estructural confirmado (${entity.defectDetail || 'Fisura de 18.4mm'}). Clasificación: NO CONFORME (Derivada a rechazo). Confianza: ${(entity.confidence * 100).toFixed(0)}%`;
+              break;
+            }
+          }
+          break;
+        }
+
+        case 'bottleQuality': {
+          for (const entity of state.entities) {
+            // Se notifica cuando una botella en buen estado pasa por la estación de inspección CAM-QC1 (x entre 0.35 y 0.44)
+            if (!entity.isDefective && entity.x >= 0.35 && entity.x <= 0.44 && !entity.inspectedThisPass) {
+              triggered = true;
+              triggerEntity = entity;
+              triggerZone = state.zones.find((z) => z.id === 'z_inspection_fov') || state.zones[0];
+              entity.inspectedThisPass = true;
+              message = `NOTIFICACIÓN: ${entity.label} en BUEN ESTADO verificada (Llenado, sellado y lote conformes)`;
+              evidence = `Estación CAM-QC1 · Visión AI: Inspección óptica 100% aprobada. Tapa hermética, volumen 500 ml ±1% y superficie libre de rayones. Clasificación: CONFORME. Confianza: ${(entity.confidence * 100).toFixed(0)}%`;
+              break;
+            }
+          }
+          break;
+        }
+
+        case 'barcodeFault': {
+          triggered = true;
+          message = `Código óptico de lote degradado en estación de inspección`;
+          evidence = `Nivel de contraste del código de barras inferior a 0.40. Registro enviado a verificación manual.`;
+          break;
+        }
+
+        case 'retailOvercapacity': {
+          const mainAisle = state.zones.find((z) => z.id === 'z_main_aisle' || z.type === 'safe_passage');
+          const shoppersInAisle = state.entities.filter((e) =>
+            e.classId === 'cls_persona' && (e.occupiedZoneId === 'z_main_aisle' || (mainAisle && entityInZone(e, mainAisle)))
+          ).length;
+          if (shoppersInAisle >= (rule.threshold ?? 3)) {
+            triggered = true;
+            message = `Alerta de sobreafluencia en pasillo comercial: ${shoppersInAisle} clientes simultáneos`;
+            evidence = `Aforo en pasillo superado (umbral ${rule.threshold ?? 3}). Notificación a supervisor de sala para agilizar flujo.`;
+          }
+          break;
+        }
+
         case 'spaceInvasion': {
           // Check if any walking/standing entity is overlapping another entity's workspace zone
           for (const entity of state.entities) {

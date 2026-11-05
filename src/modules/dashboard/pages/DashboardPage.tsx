@@ -141,18 +141,18 @@ export const DashboardPage: React.FC = () => {
             onClick={() => setCurrentPage('analysis')}
             className="shadow-lg shadow-cyan-600/30"
           >
-            Nuevo Análisis Visual
+            Inspección de Imágenes
           </Button>
         </div>
       </div>
 
 
       {/* Live Monitor Quick Access */}
-      <div className="bg-gradient-to-r from-zinc-900 to-slate-900 rounded-xl border border-slate-800 p-4">
+      <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-2xs">
         <div className="flex items-center gap-2 mb-3">
-          <Cctv className="w-4 h-4 text-cyan-400" />
-          <span className="text-sm font-semibold text-slate-200">Monitoreo en Vivo</span>
-          <span className="ml-auto text-[10px] font-mono text-cyan-500 bg-cyan-950/40 border border-cyan-800/40 px-2 py-0.5 rounded">MODO DEMO</span>
+          <Cctv className="w-4 h-4 text-blue-600" />
+          <span className="text-sm font-bold text-slate-900">Monitoreo en Vivo (Entornos Calibrados)</span>
+          <span className="ml-auto text-[10px] font-mono font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded">EN DIRECTO</span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {[
@@ -164,10 +164,10 @@ export const DashboardPage: React.FC = () => {
             <button
               key={label}
               onClick={() => setCurrentPage("live_monitor")}
-              className={`text-left p-3 rounded-lg border bg-zinc-900/60 ${border} transition-all group`}
+              className="text-left p-3.5 rounded-xl border border-slate-200/90 bg-slate-50/70 hover:bg-white hover:border-blue-400 hover:shadow-xs transition-all cursor-pointer group"
             >
-              <div className="text-xs font-bold font-mono text-zinc-500 mb-1">[{code}]</div>
-              <div className="text-xs font-semibold text-slate-200 group-hover:text-white transition-colors leading-tight mb-1">{label}</div>
+              <div className="text-xs font-bold font-mono text-slate-400 mb-1">[{code}]</div>
+              <div className="text-xs font-bold text-slate-800 group-hover:text-blue-700 transition-colors leading-tight mb-1">{label}</div>
               <div className="text-[10px] text-slate-500 leading-tight">{sub}</div>
             </button>
           ))}
